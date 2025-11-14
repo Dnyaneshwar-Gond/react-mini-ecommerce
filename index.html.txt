@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>React Mini Ecommerce — DG Tech</title>
+  <style>
+/* ---------- INLINED CSS (same responsive Flipkart-style) ---------- */
+:root{
+  --bg:#f8fafc; --card:#ffffff; --muted:#6b7280; --accent:#0f172a;
+  --primary:#ff6b6b; --cart-width:340px; --radius:12px; --maxwidth:1300px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:#0f172a;-webkit-font-smoothing:antialiased}
+.app-root{max-width:var(--maxwidth);margin:12px auto;padding:12px}
+.title{text-align:center;font-size:20px;margin:6px 0 12px;font-weight:700}
+.filter-bar{display:flex;gap:8px;padding:8px 6px;margin-bottom:14px;overflow-x:auto}
+.filter-btn{flex:0 0 auto;padding:8px 12px;border-radius:10px;border:1px solid #eef2ff;background:#fff;cursor:pointer;font-weight:600;white-space:nowrap;font-size:13px}
+.filter-btn.active{background:#2563eb;color:#fff;border-color:#2563eb}
+.container{display:block;padding:6px}
+.products{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px}
+.product-card{background:var(--card);border-radius:var(--radius);box-shadow:0 6px 18px rgba(12,16,30,0.06);display:flex;gap:12px;padding:12px;align-items:center}
+.product-thumb{width:110px;height:110px;flex-shrink:0;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:8px;border:1px solid #f1f5f9}
+.product-thumb img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.product-info{flex:1;display:flex;flex-direction:column;gap:6px}
+.product-info h3{margin:0;font-size:15px;font-weight:700;line-height:1.1}
+.meta{color:var(--muted);font-size:13px;margin:0}
+.price{font-weight:800;font-size:15px;color:#08172a}
+.add-btn{margin-top:8px;padding:10px 12px;border-radius:10px;border:none;cursor:pointer;font-weight:800;font-size:14px;color:#fff;background:linear-gradient(90deg,#ff6b6b 0%, #ff9a8b 100%);box-shadow:0 8px 18px rgba(255,107,107,0.16);width:160px;align-self:flex-end}
+.add-btn.full{width:100%}
+.cart{background:var(--card);border-radius:var(--radius);padding:12px;box-shadow:0 6px 18px rgba(12,16,30,0.06);margin-top:12px}
+.cart h2{margin:0 0 8px;font-size:18px}
+.cart-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;align-items:center}
+.cart-item img{width:60px;height:60px;object-fit:cover;border-radius:8px}
+.cart-item .info{flex:1;font-size:14px}
+.remove-btn{padding:8px 10px;border-radius:8px;background:#ef4444;color:#fff;border:none;font-weight:700;cursor:pointer}
+.total{text-align:right;margin-top:12px;font-size:16px;font-weight:800}
+.footer{ text-align:center;margin-top:20px;padding:14px 0;font-size:14px;color:var(--muted);background:#fff;border-top:1px solid #e5e7eb }
+/* Responsive */
+@media (min-width:768px){ .products{grid-template-columns:repeat(2,1fr);gap:14px} .product-card{flex-direction:column;align-items:stretch;min-height:320px;padding:14px} .product-thumb{width:100%;height:170px} .add-btn{width:100%} }
+@media (min-width:992px){ .container{display:grid;grid-template-columns:1fr var(--cart-width);gap:20px;align-items:start} .products{grid-template-columns:repeat(3,1fr);gap:20px} .product-card{min-height:360px} .product-thumb{height:200px} .cart{position:sticky;top:20px} }
+@media (min-width:1280px){ .products{grid-template-columns:repeat(4,1fr);gap:22px} }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React & Babel (CDN) -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- App (inlined JS as JSX via Babel) -->
+  <script type="text/babel">
+const { useState } = React;
+
+const initialProducts = [
+  { id:1, name:"Laptop - UltraSlim", category:"Electronics", price:1200, img:"https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=900" },
+  { id:2, name:"Men's Cotton T-Shirt", category:"Clothing", price:25, img:"https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=900" },
+  { id:3, name:"The Great Gatsby", category:"Books", price:15, img:"https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=900" },
+  { id:4, name:"Smartphone Pro", category:"Electronics", price:800, img:"https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=900" },
+  { id:5, name:"Slim Fit Jeans", category:"Clothing", price:50, img:"https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=900" },
+  { id:6, name:"Sapiens - Yuval Noah Harari", category:"Books", price:20, img:"https://images.unsplash.com/photo-1528207776546-365bb710ee93?w=900" }
+];
+
+function App(){
+  const [category,setCategory]=useState("All");
+  const [cart,setCart]=useState({});
+
+  const filtered = category==="All" ? initialProducts : initialProducts.filter(p=>p.category===category);
+
+  function addToCart(p){
+    setCart(prev=>({
+      ...prev,
+      [p.id]: prev[p.id] ? {...prev[p.id], quantity: prev[p.id].quantity + 1} : {...p, quantity:1}
+    }));
+  }
+
+  function removeFromCart(id){
+    setCart(prev=>{
+      const copy={...prev};
+      if(!copy[id]) return prev;
+      if(copy[id].quantity>1) copy[id].quantity--;
+      else delete copy[id];
+      return copy;
+    });
+  }
+
+  const cartItems = Object.values(cart);
+  const total = cartItems.reduce((s,it)=> s + it.price * it.quantity, 0);
+
+  return (
+    <div className="app-root">
+      <h1 className="title">🛒 Product Filter & Cart</h1>
+
+      <div className="filter-bar" role="tablist" aria-label="Product categories">
+        {["All","Electronics","Books","Clothing"].map(cat=>(
+          <button key={cat} className={`filter-btn ${cat===category ? "active" : ""}`} onClick={()=>setCategory(cat)}>{cat}</button>
+        ))}
+      </div>
+
+      <div className="container">
+        <div className="products" aria-live="polite">
+          {filtered.map(p=>(
+            <div className="product-card" key={p.id}>
+              <div className="product-thumb">
+                <img src={p.img} alt={p.name} loading="lazy"/>
+              </div>
+              <div className="product-info">
+                <h3>{p.name}</h3>
+                <div className="meta">{p.category}</div>
+                <div className="price">${p.price}</div>
+                <button className="add-btn" onClick={()=>addToCart(p)}>Add to Cart</button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <aside className="cart" aria-label="Shopping cart">
+          <h2>🛍️ Cart</h2>
+
+          {cartItems.length===0 ? <p>Cart is empty</p> : cartItems.map(it=>(
+            <div className="cart-item" key={it.id}>
+              <img src={it.img} alt={it.name}/>
+              <div className="info">
+                <div style={{fontWeight:700}}>{it.name}</div>
+                <div className="meta">Price: ${it.price}</div>
+                <div className="meta">Qty: {it.quantity}</div>
+              </div>
+              <button className="remove-btn" onClick={()=>removeFromCart(it.id)}>Remove</button>
+            </div>
+          ))}
+
+          <div className="total">Total: ${total}</div>
+        </aside>
+      </div>
+
+      <footer className="footer">© 2025 DG Tech Solutions. Created by Dnyaneshwar Gond.</footer>
+    </div>
+  );
+}
+
+/* render */
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
